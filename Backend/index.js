@@ -11,6 +11,10 @@ import connectDB from "./config/db.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
+//Routes
+import authRoutes from "./routes/authRoutes.js";
+
 const app = express();
 
 //Middleware to handle CORS
@@ -28,6 +32,11 @@ connectDB();
 
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
+//Routes Middleware
+app.use("/api/auth" , authRoutes);
 
 
 //static folder for images
