@@ -15,6 +15,7 @@ const __dirname = path.dirname(__filename);
 //Routes
 import authRoutes from "./routes/authRoutes.js";
 import bookRoutes from "./routes/bookRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use(express.urlencoded({ extended: true }));
 //Routes Middleware
 app.use("/api/auth" , authRoutes);
 app.use("/api/books" , bookRoutes);
+app.use("/api/ai", aiRoutes);
 
 
 //static folder for images
