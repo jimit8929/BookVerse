@@ -38,7 +38,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //Routes Middleware
 app.use("/api/auth" , authRoutes);
-app.use("/api/book" , bookRoutes);
+app.use("/api/books" , bookRoutes);
 
 
 //static folder for images
