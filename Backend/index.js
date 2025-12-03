@@ -14,6 +14,7 @@ const __dirname = path.dirname(__filename);
 
 //Routes
 import authRoutes from "./routes/authRoutes.js";
+import bookRoutes from "./routes/bookRoutes.js";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //Routes Middleware
 app.use("/api/auth" , authRoutes);
+app.use("/api/book" , bookRoutes);
 
 
 //static folder for images
@@ -45,6 +47,8 @@ app.use("/Backend/uploads", express.static(path.join(__dirname, "uploads")));
 
 //start the server
 const PORT = process.env.PORT || 8000;
+
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
