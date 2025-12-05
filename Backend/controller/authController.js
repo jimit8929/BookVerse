@@ -1,20 +1,36 @@
+import dotenv from "dotenv";
+dotenv.config();
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-//Helper function to verify JWT token
+
+
 export const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  const token = jwt.sign(
+    { id },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  console.log("\n===== TOKEN GENERATED =====");
+  console.log("USER ID:", id);
+  console.log("JWT_SECRET (sign):", JSON.stringify(process.env.JWT_SECRET));
+  console.log("TOKEN:", token);
+
+  return token;
 };
 
-//Register Controller
+
+// ====================== REGISTER USER ======================
 export const registerUser = async (req, res) => {
+  console.log("\n===== REGISTER USER =====");
+
   const { name, email, password } = req.body;
+  console.log("REGISTER BODY:", req.body);
 
   try {
     if (!name || !email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Please provide all required fields" });
+      return res.status(400).json({ message: "Please provide all required fields" });
     }
 
     const userExists = await User.findOne({ email });
@@ -23,41 +39,51 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    //Create new user
     const user = await User.create({ name, email, password });
 
     if (user) {
-      res.status(201).json({
+      const token = generateToken(user._id);
+      return res.status(201).json({
         message: "User registered successfully",
-        token: generateToken(user._id),
+        token,
       });
     } else {
-      res.status(400).json({ message: "Invalid user data" });
+      return res.status(400).json({ message: "Invalid user data" });
     }
-  } catch (err) {
+  } 
+  catch (err) {
+    console.log("❌ REGISTER ERROR:", err);
     res.status(500).json({ message: "Server Error" });
   }
 };
 
-//Login Controller
+
+// ====================== LOGIN USER ======================
 export const loginUser = async (req, res) => {
+  console.log("\n===== LOGIN USER =====");
+
   const { email, password } = req.body;
+  console.log("LOGIN BODY:", req.body);
 
   try {
     const user = await User.findOne({ email }).select("+password");
 
     if (user && (await user.matchPassword(password))) {
-      res.json({
+      const token = generateToken(user._id);
+
+      return res.json({
         message: "User logged in successfully",
         _id: user._id,
         name: user.name,
         email: user.email,
-        token: generateToken(user._id),
+        token,
       });
     } else {
-      res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
-  } catch (err) {
+  } 
+  catch (err) {
+    console.log("❌ LOGIN ERROR:", err);
     res.status(500).json({ message: "Server Error" });
   }
 };

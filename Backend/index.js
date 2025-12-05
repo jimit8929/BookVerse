@@ -16,6 +16,7 @@ const __dirname = path.dirname(__filename);
 import authRoutes from "./routes/authRoutes.js";
 import bookRoutes from "./routes/bookRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import exportRoutes from "./routes/exportRoutes.js";
 
 const app = express();
 
@@ -41,10 +42,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth" , authRoutes);
 app.use("/api/books" , bookRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/export", exportRoutes);
 
 
 //static folder for images
-app.use("/Backend/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 //start the server

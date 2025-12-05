@@ -109,7 +109,8 @@ export const updateBookCover = async (req, res) => {
     }
 
     if (req.file) {
-      book.coverImage = req.file.path.replace(/\\/g, "/");
+      book.coverImage = `/uploads/${req.file.filename}`;
+
     } else {
       return res.status(400).json({ message: "No file uploaded" });
     }

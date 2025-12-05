@@ -1,3 +1,6 @@
+
+import dotenv from "dotenv";
+dotenv.config();
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
