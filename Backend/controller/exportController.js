@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import {
   Document,
   Packer,
@@ -9,9 +11,9 @@ import {
   ImageRun,
 } from "docx";
 
-import { image, PDFDocument } from "pdfkit";
+import PDFDocument from "pdfkit";
 
-import { MarkdownIt } from "markdown-it";
+import MarkdownIt from "markdown-it";
 
 import Book from "../models/Book.js";
 
@@ -20,6 +22,8 @@ import path from "path";
 import fs from "fs";
 
 const md = new MarkdownIt();
+
+
 
 //Typography configuration matching the PDF export
 
@@ -522,7 +526,7 @@ export const exportAsDocument = async (req, res) => {
     );
 
     res.setHeader(
-      "content-disposition",
+      "content-Disposition",
       `attachment; filename=${book.title.replace(/[^a-zA-Z0-9]/g, "_")}.docx`
     );
 
@@ -537,6 +541,541 @@ export const exportAsDocument = async (req, res) => {
         message: "Server Error During Document Export",
         error: error.message,
       });
+    }
+  }
+};
+
+//Typography configuration matching the DOCX export
+const TYPOGRAPHY = {
+  fonts: {
+    serif: "Times-Roman",
+    serifBold: "Times-Bold",
+    sans: "Helvetica",
+    serifItalic: "Times-Italic",
+    sansBold: "Helvetica-Bold",
+    sansOblique: "Helvetica-Oblique",
+  },
+
+  sizes: {
+    title: 28,
+    author: 16,
+    chapterTitle: 20,
+    h1: 18,
+    h2: 16,
+    h3: 14,
+    body: 11,
+    caption: 9,
+  },
+
+  spacing: {
+    paragraphSpacing: 12,
+    chapterSpacing: 24,
+    headingSpacing: { before: 16, after: 8 },
+    listSpacing: 6,
+  },
+
+  colors: {
+    text: "#333333",
+    heading: "#1A1A1A",
+    accent: "#4F46E5",
+  },
+};
+
+const renderInlineTokens = (doc, tokens, options = {}) => {
+  if (!tokens || tokens.length === 0) return;
+
+  const baseOptions = {
+    align: options.align || "justify",
+    indent: options.indent || 0,
+    lineGap: options.lineGap || 2,
+  };
+
+  let currentFont = TYPOGRAPHY.fonts.serif;
+  let textBuffer = "";
+
+  const flushBuffer = () => {
+    if (textBuffer) {
+      doc.font(currentFont).text(textBuffer, {
+        ...baseOptions,
+        continued: true,
+      });
+      textBuffer = "";
+    }
+  };
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+
+    if (token.type === "text") {
+      textBuffer += token.content;
+    } else if (token.type === "strong_open") {
+      flushBuffer();
+      currentFont = TYPOGRAPHY.fonts.serifBold;
+    } else if (token.type === "strong_close") {
+      flushBuffer();
+      currentFont = TYPOGRAPHY.fonts.serif;
+    } else if (token.type === "em_open") {
+      flushBuffer();
+      currentFont = TYPOGRAPHY.fonts.serifItalic;
+    } else if (token.type === "em_close") {
+      flushBuffer();
+      currentFont = TYPOGRAPHY.fonts.serif;
+    } else if (token.type === "code_inline") {
+      flushBuffer();
+      doc.font("Courier").text(token.content, {
+        ...baseOptions,
+        continued: true,
+      });
+
+      doc.font(currentFont); // revert to current font
+    }
+  }
+
+  // if (textBuffer) {
+  //   doc.font(currentFont).text(textBuffer, {
+  //     ...baseOptions,
+  //     continued: false,
+  //   });
+  // } else {
+  //   doc.text("", { continued: false });
+  // }
+  doc.text("", { continued: false });
+};
+
+const renderMarkdown = (doc, markdown) => {
+  if (!markdown || markdown.trim() === "") return;
+
+  const tokens = md.parse(markdown, {});
+  let inList = false;
+  let listType = null;
+  let orderedListCounter = 1;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+
+    try {
+      if (token.type === "heading_open") {
+        const level = parseInt(token.tag.substring(1), 10);
+        let fontSize;
+
+        switch (level) {
+          case 1:
+            fontSize = TYPOGRAPHY.sizes.h1;
+            break;
+          case 2:
+            fontSize = TYPOGRAPHY.sizes.h2;
+            break;
+          case 3:
+            fontSize = TYPOGRAPHY.sizes.h3;
+            break;
+          default:
+            fontSize = TYPOGRAPHY.sizes.h3;
+        }
+
+        doc.moveDown(
+          TYPOGRAPHY.spacing.headingSpacing.before / TYPOGRAPHY.sizes.body
+        );
+
+        doc
+          .font(TYPOGRAPHY.fonts.sansBold)
+          .fontSize(fontSize)
+          .fillColor(TYPOGRAPHY.colors.heading);
+
+        if (i + 1 < tokens.length && tokens[i + 1].type === "inline") {
+          renderInlineTokens(doc, tokens[i + 1].children, {
+            align: "left",
+            lineGap: 0,
+          });
+          i++;
+        }
+
+        doc.moveDown(
+          TYPOGRAPHY.spacing.headingSpacing.after / TYPOGRAPHY.sizes.body
+        );
+
+        if (i + 1 < tokens.length && tokens[i + 1].type === "heading_close") {
+          i++;
+        }
+      } else if (token.type === "paragraph_open") {
+        doc
+          .font(TYPOGRAPHY.fonts.serif)
+          .fontSize(TYPOGRAPHY.sizes.body)
+          .fillColor(TYPOGRAPHY.colors.text);
+
+        if (i + 1 < tokens.length && tokens[i + 1].type === "inline") {
+          renderInlineTokens(doc, tokens[i + 1].children, {
+            align: "justify",
+            lineGap: 2,
+          });
+          i++;
+        }
+
+        if (!inList) {
+          doc.moveDown(
+            TYPOGRAPHY.spacing.paragraphSpacing / TYPOGRAPHY.sizes.body
+          );
+        }
+
+        if (i + 1 < tokens.length && tokens[i + 1].type === "paragraph_close") {
+          i++;
+        }
+      } else if (token.type === "bullet_list_open") {
+        inList = true;
+        listType = "bullet";
+        doc.moveDown(TYPOGRAPHY.spacing.listSpacing / TYPOGRAPHY.sizes.body);
+      } else if (token.type === "bullet_list_close") {
+        inList = false;
+        listType = null;
+        doc.moveDown(TYPOGRAPHY.spacing.listSpacing / TYPOGRAPHY.sizes.body);
+      } else if (token.type === "ordered_list_open") {
+        inList = true;
+        listType = "ordered";
+        orderedListCounter = 1;
+        doc.moveDown(TYPOGRAPHY.spacing.listSpacing / TYPOGRAPHY.sizes.body);
+      } else if (token.type === "ordered_list_close") {
+        inList = false;
+        listType = null;
+        orderedListCounter = 1;
+        doc.moveDown(TYPOGRAPHY.spacing.listSpacing / TYPOGRAPHY.sizes.body);
+      } else if (token.type === "list_item_open") {
+        let bulletText = "";
+        if (listType === "bullet") {
+          bulletText = "• ";
+        } else if (listType === "ordered") {
+          bulletText = `${orderedListCounter}. `;
+          orderedListCounter++;
+        }
+
+        doc
+          .font(TYPOGRAPHY.fonts.serif)
+          .fontSize(TYPOGRAPHY.sizes.body)
+          .fillColor(TYPOGRAPHY.colors.text);
+
+        doc.text(bulletText, { continued: true, indent: 20 });
+
+        for (let j = i + 1; j < tokens.length; j++) {
+          if (tokens[j].type === "inline" && tokens[j].children) {
+            renderInlineTokens(doc, tokens[j].children, {
+              align: "left",
+              lineGap: 2,
+            });
+            break;
+          } else if (tokens[j].type === "list_item_close") {
+            break;
+          }
+        }
+
+        doc.moveDown(TYPOGRAPHY.spacing.listSpacing / TYPOGRAPHY.sizes.body);
+      } else if (token.type === "code_block" || token.type === "fence") {
+        doc.moveDown(
+          TYPOGRAPHY.spacing.paragraphSpacing / TYPOGRAPHY.sizes.body
+        );
+
+        doc
+          .font("Courier")
+          .fontSize(9)
+          .fillColor(TYPOGRAPHY.colors.text)
+          .text(token.content, {
+            align: "left",
+            indent: 20,
+          });
+
+        doc.font(TYPOGRAPHY.fonts.serif).fontSize(TYPOGRAPHY.sizes.body);
+
+        doc.moveDown(
+          TYPOGRAPHY.spacing.paragraphSpacing / TYPOGRAPHY.sizes.body
+        );
+      } else if (token.type === "hr") {
+        doc.moveDown();
+        const y = doc.y;
+
+        doc
+          .moveTo(doc.page.margins.left, y)
+          .lineTo(doc.page.width - doc.page.margins.right, y)
+          .stroke();
+
+        doc.moveDown();
+      }
+    } catch (TokenError) {
+      console.error("Error processing token:", token.type, TokenError);
+      continue;
+    }
+  }
+};
+
+// export const exportAsPDF = async (req, res) => {
+//   try {
+//     const book = await Book.findById(req.params.id);
+
+//     if (!book) {
+//       return res.status(404).json({ message: "Book not Found" });
+//     }
+
+//     if (book.userId.toString() !== req.user._id.toString()) {
+//       return res.status(401).json({ message: "Not Authorized" });
+//     }
+
+//     //Create a PDF Document
+//     const doc = new PDFDocument({
+//       margins: { top: 72, bottom: 72, left: 72, right: 72 },
+//       bufferPages: true,
+//       autoFirstPage: true,
+//     });
+
+//     //set headers before piping
+//     res.setHeader("Content-Type", "application/pdf");
+//     res.setHeader(
+//       "Content-Disposition",
+//       `attachment; filename=${book.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
+//     );
+
+//     //Pipe the PDF into response
+//     doc.pipe(res);
+
+//     //Cover page with image if available
+//     if (book.coverImage && !book.coverImage.includes("pravatar")) {
+//       // const imagePath = book.coverImage.substring(1);
+//       const imagePath = path.join(
+//         process.cwd(),
+//         book.coverImage.replace(/^\//, "")
+//       );
+
+//       try {
+//         if (fs.existsSync(imagePath)) {
+//           const pageWidth =
+//             doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+//           const pageHeight =
+//             doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
+
+//           doc.image(imagePath, doc.page.margins.left, doc.page.margins.top, {
+//             fit: [pageWidth * 0.8, pageHeight * 0.8],
+//             align: "center",
+//             valign: "center",
+//           });
+//           doc.addPage();
+//         }
+//       } catch (ImgError) {
+//         console.error(`Could not embed image: ${imagePath}`, ImgError);
+//       }
+//     }
+
+//     //Title Page
+//     doc
+//       .font(TYPOGRAPHY.fonts.sansBold)
+//       .fontSize(TYPOGRAPHY.sizes.title)
+//       .fillColor(TYPOGRAPHY.colors.heading)
+//       .text(book.title, { align: "center" });
+
+//     doc.moveDown(2);
+
+//     if (book.subtitle && book.subtitle.trim()) {
+//       doc
+//         .font(TYPOGRAPHY.fonts.sans)
+//         .fontSize(TYPOGRAPHY.sizes.h2)
+//         .fillColor(TYPOGRAPHY.colors.text)
+//         .text(book.subtitle, { align: "center" });
+
+//       doc.moveDown(1);
+//     }
+
+//     doc
+//       .font(TYPOGRAPHY.fonts.sans)
+//       .fontSize(TYPOGRAPHY.sizes.author)
+//       .fillColor(TYPOGRAPHY.colors.text)
+//       .text(`by ${book.author}`, { align: "center" });
+
+//     //Process Chapters
+//     if (book.chapters && book.chapters.length > 0) {
+//       book.chapters.forEach((chapter, index) => {
+//         try {
+//           doc.addPage();
+
+//           //Chapter Title
+//           doc
+//             .font(TYPOGRAPHY.fonts.sansBold)
+//             .fontSize(TYPOGRAPHY.sizes.chapterTitle)
+//             .fillColor(TYPOGRAPHY.colors.heading)
+//             .text(chapter.title || `Chapter ${index + 1}`, { align: "left" });
+
+//           doc.moveDown(
+//             TYPOGRAPHY.spacing.chapterSpacing / TYPOGRAPHY.sizes.body
+//           );
+
+//           //Chapter Content
+//           if (chapter.content && chapter.content.trim()) {
+//             renderMarkdown(doc, chapter.content);
+//           }
+//         } catch (ChapterError) {
+//           console.error(`Error Processing Chapter ${index}:`, ChapterError);
+//         }
+//       });
+//     }
+
+//     //Finalize the PDF and end the stream
+//     doc.end();
+
+//     console.log("CWD = ", process.cwd());
+//     console.log("coverImage = ", book.coverImage);
+//     console.log("imagePath = ", imagePath);
+//     console.log("exists = ", fs.existsSync(imagePath));
+//   } catch (error) {
+//     console.error("Error exporting PDF:", error);
+
+//     if (!res.headersSent) {
+//       res.status(500).json({
+//         message: " Server Error During PDF Export",
+//         error: error.message,
+//       });
+//     }
+//   }
+// };
+
+/* -------------------------
+   Export as PDF (robust)
+   ------------------------- */
+export const exportAsPDF = async (req, res) => {
+  let doc = null;
+  let imagePath = null;
+
+  try {
+    const book = await Book.findById(req.params.id);
+
+    if (!book) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+
+    if (book.userId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    // Create PDF document
+    doc = new PDFDocument({
+      margins: { top: 72, bottom: 72, left: 72, right: 72 },
+      bufferPages: true,
+      autoFirstPage: true,
+    });
+
+    // IMPORTANT: set error handler on PDF doc BEFORE piping
+    doc.on("error", (err) => {
+      console.error("PDFKit error:", err);
+      // If headers not yet sent, respond with 500
+      if (!res.headersSent) {
+        try {
+          res.status(500).end();
+        } catch (e) {
+          // ignore
+        }
+      } else {
+        // If headers already sent, attempt to destroy the response stream
+        try {
+          res.destroy();
+        } catch (e) {
+          // ignore
+        }
+      }
+    });
+
+    // If client disconnects, abort generation
+    res.on("close", () => {
+      if (doc && !doc._destroyed) {
+        try {
+          doc.destroy();
+        } catch (e) {
+          // ignore
+        }
+      }
+    });
+
+    // Set headers BEFORE piping
+    const safeFilename = (book.title || "book").replace(/[^a-zA-Z0-9]/g, "_");
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=${safeFilename}.pdf`);
+
+    // Pipe doc into response
+    doc.pipe(res);
+
+    // --- COVER IMAGE (resolved safely) ---
+    if (book.coverImage && typeof book.coverImage === "string" && !book.coverImage.includes("pravatar")) {
+      // Expect stored as "/uploads/filename" or "uploads/filename"
+      const relative = book.coverImage.replace(/^\//, ""); // remove leading slash if present
+      imagePath = path.join(process.cwd(), relative); // e.g., Backend/uploads/filename
+
+      // Debug logs (safe to log BEFORE finalizing the doc)
+      console.log("CWD =", process.cwd());
+      console.log("book.coverImage =", book.coverImage);
+      console.log("resolved imagePath =", imagePath);
+      console.log("exists =", fs.existsSync(imagePath));
+
+      if (fs.existsSync(imagePath)) {
+        try {
+          const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+          const pageHeight = doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
+
+          doc.image(imagePath, doc.page.margins.left, doc.page.margins.top, {
+            fit: [pageWidth * 0.8, pageHeight * 0.8],
+            align: "center",
+            valign: "center",
+          });
+
+          // Add a new page for the rest of content
+          doc.addPage();
+        } catch (ImgError) {
+          console.error("Could not embed cover image:", ImgError);
+          // continue without image
+        }
+      } else {
+        console.warn("Cover image not found at path:", imagePath);
+      }
+    } else {
+      // No cover image or uses external placeholder; continue
+      console.log("No local cover image to embed.");
+    }
+
+    // --- TITLE PAGE ---
+    doc.font(TYPOGRAPHY.fonts.sansBold).fontSize(TYPOGRAPHY.sizes.title).fillColor(TYPOGRAPHY.colors.heading).text(book.title || "", { align: "center" });
+    doc.moveDown(2);
+
+    if (book.subtitle && book.subtitle.trim()) {
+      doc.font(TYPOGRAPHY.fonts.sans).fontSize(TYPOGRAPHY.sizes.h2).fillColor(TYPOGRAPHY.colors.text).text(book.subtitle, { align: "center" });
+      doc.moveDown(1);
+    }
+
+    doc.font(TYPOGRAPHY.fonts.sans).fontSize(TYPOGRAPHY.sizes.author).fillColor(TYPOGRAPHY.colors.text).text(`by ${book.author || ""}`, { align: "center" });
+
+    // --- CHAPTERS ---
+    if (Array.isArray(book.chapters) && book.chapters.length > 0) {
+      for (let index = 0; index < book.chapters.length; index++) {
+        const chapter = book.chapters[index];
+        // start each chapter on a new page
+        doc.addPage();
+
+        doc.font(TYPOGRAPHY.fonts.sansBold).fontSize(TYPOGRAPHY.sizes.chapterTitle).fillColor(TYPOGRAPHY.colors.heading).text(chapter.title || `Chapter ${index + 1}`, { align: "left" });
+        doc.moveDown(TYPOGRAPHY.spacing.chapterSpacing / TYPOGRAPHY.sizes.body);
+
+        if (chapter.content && chapter.content.trim()) {
+          renderMarkdown(doc, chapter.content);
+        }
+      }
+    }
+
+    // Finalize the PDF (do NOT log imagePath or exists AFTER this point)
+    doc.end();
+    // After doc.end(), the stream will emit 'finish'/'end'. We do not write to res anymore.
+  } catch (error) {
+    console.error("Error exporting PDF:", error);
+    // If headers haven't been sent yet, respond with JSON error
+    if (!res.headersSent) {
+      return res.status(500).json({ message: "Server Error During PDF Export", error: error.message });
+    } else {
+      // headers already sent: ensure doc/res are cleaned up to prevent 'write after end'
+      if (doc && !doc._destroyed) {
+        try {
+          doc.destroy();
+        } catch (e) {
+          // ignore
+        }
+      }
     }
   }
 };
