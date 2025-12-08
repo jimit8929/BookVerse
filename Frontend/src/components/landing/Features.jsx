@@ -11,7 +11,7 @@ const Features = () => {
 
 
     {/* Subtle Background Pattern */}
-    <div className="absolute inset-0 bg-linear-to-b from-violet-50/50 via-transparent to-purple-500/15"></div>
+    <div className="absolute inset-0 bg-linear-to-b from-violet-50/50 via-transparent to-purple-50/50"></div>
 
       
       <div className="max-w-[1660px] mx-auto px-6 lg:px-8 relative">
@@ -41,7 +41,7 @@ const Features = () => {
             const Icon = feature.icon;
             return (
               <div
-                className="group relative bg-white rounded-2xl p-8 border border-gray-100 hover:border-violet-200 hover:shadow-xl hover:shadow-violet-500/10 transition-all duration-300 hover:-translate-y-1"
+                className="group relative bg-white rounded-2xl p-8 border border-gray-100 hover:border-violet-500 hover:shadow-xl hover:shadow-violet-500/10 transition-all duration-300 hover:-translate-y-1"
                 key={index}
               >
                 <div className="absolute inset-0 bg-linear-to-br from-violet-50/0 to-purple-50/0 group-hover:from-violet-50/50 group-hover:to-purple-50/30 rounded-2xl transition-all duration-300"></div>
