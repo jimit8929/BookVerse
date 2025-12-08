@@ -9,9 +9,8 @@ const Hero = () => {
 
   return (
     <div className="relative bg-linear-to-br from-violet-50 via-white to-purple-50 overflow-hidden">
-
-    <div className="absolute top-20 left-10 w-64 h-64 bg-violet-200/20 rounded-full blur-3xl animate-pulse"></div>
-    <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+      <div className="absolute top-20 left-10 w-64 h-64 bg-violet-200/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-pulse delay-700"></div>
 
       <div className="max-w-[1660px] mx-auto px-6 lg:px-8 py-24 lg:py-32 relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -115,9 +114,8 @@ const Hero = () => {
               </div>
             </div>
 
-          <div className="absolute -top-8 -left-2 w-20 h-20 bg-violet-400/30 rounded-2xl rotate-12"></div>
-          <div className="absolute -bottom-14 -right-12 w-32 h-32 bg-purple-400/30 rounded-full"></div>
-
+            <div className="absolute -top-8 -left-2 w-20 h-20 bg-violet-400/30 rounded-2xl rotate-12"></div>
+            <div className="absolute -bottom-14 -right-12 w-32 h-32 bg-purple-400/30 rounded-full"></div>
           </div>
         </div>
       </div>
