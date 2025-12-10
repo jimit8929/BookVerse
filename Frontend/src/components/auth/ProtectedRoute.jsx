@@ -1,12 +1,12 @@
-import React from 'react'
-import { Navigate, useLocation } from 'react-router-dom';
-import Spinner from '../ui/Spinner';
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import Spinner from "../ui/Spinner";
+import { useAuth } from "../../context/AuthContext";
 
-const ProtectedRoute = ({children}) => {
-  const isAuthenticated = false; // Replace with actual authentication logic
-  const loading = false; // Replace with actual loading state
-  const location = useLocation(); 
+const ProtectedRoute = ({ children }) => {
+  const location = useLocation();
 
+  const { isAuthenticated, loading } = useAuth();
   if (loading) {
     return <Spinner />;
   }
@@ -16,6 +16,6 @@ const ProtectedRoute = ({children}) => {
   }
 
   return children;
-}
+};
 
-export default ProtectedRoute
+export default ProtectedRoute;
