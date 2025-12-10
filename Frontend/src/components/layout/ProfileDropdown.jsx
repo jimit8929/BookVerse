@@ -41,7 +41,7 @@ const ProfileDropdown = ({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+        <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
           <div className="px-4 py-3 border-b border-gray-100">
             <p className="text-xl font-medium text-gray-900">{companyName}</p>
             <p className="text-lg text-gray-500">{email}</p>
