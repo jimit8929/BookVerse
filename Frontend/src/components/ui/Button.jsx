@@ -11,23 +11,23 @@ const Button = ({
 }) => {
   const variants = {
     primary:
-      "bg-linear-to-r from-violet-400 to-violet-500 hover:bg-violet-700 text-white shadow-sm hover:shadow-md",
-    secondary: "bg-gray-100 hover:gray-200 text-gray-700",
+      "bg-linear-to-r from-violet-400 to-violet-500 hover:bg-violet-700 text-white shadow-sm hover:shadow-md cursor-pointer",
+    secondary: "bg-gray-100 hover:bg-gray-200 text-gray-700",
     ghost: "bg-transparent hover:bg-gray-100 text-gray-700",
     danger: "bg-transparent hover:bg-red-50 text-red-600",
   };
 
   const sizes = {
-    sm: "px-3 py-1.5 text-sm h-8 rounded-lg",
-    md: "px-4 py-2.5 text-sm h-11 rounded-xl",
-    lg: "px-6 py-3 text-base h-12 rounded-xl",
+    sm: "px-3 py-1.5 text-base h-8 rounded-lg",
+    md: "px-4 py-2.5 text-lg h-11 rounded-xl",
+    lg: "px-6 py-3 text-xl h-12 rounded-xl",
   };
 
   return (
     <button
       className={`inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${variants[variant]} 
 ${sizes[size]} ${className}`}
-      disabled={isLoading}
+      disabled={isLoading || props.disabled}
       {...props}
     >
       {isLoading ? (
