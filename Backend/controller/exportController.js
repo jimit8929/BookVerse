@@ -330,7 +330,7 @@ export const exportAsDocument = async (req, res) => {
 
     const sections = [];
 
-    //Cover Page with image if available
+    // Cover Page with image if available
     const coverPage = [];
 
     if (book.coverImage && !book.coverImage.includes("pravatar")) {
@@ -360,7 +360,6 @@ export const exportAsDocument = async (req, res) => {
                   },
                 }),
               ],
-
               alignment: AlignmentType.CENTER,
               spacing: { before: 200, after: 400 },
             })
@@ -381,7 +380,7 @@ export const exportAsDocument = async (req, res) => {
 
     sections.push(...coverPage);
 
-    //Title Page Section
+    // Title Page Section
     const titlePage = [];
 
     // Main title
@@ -389,20 +388,19 @@ export const exportAsDocument = async (req, res) => {
       new Paragraph({
         children: [
           new TextRun({
-            text: book.title,
+            text: book.title || "",
             bold: true,
             font: DOCX_STYLES.fonts.heading,
             size: DOCX_STYLES.sizes.title * 2,
             color: "1A202C",
           }),
         ],
-
         alignment: AlignmentType.CENTER,
         spacing: { before: 2000, after: 400 },
       })
     );
 
-    //Subtitle if exists
+    // Subtitle if exists
     if (book.subtitle && book.subtitle.trim()) {
       titlePage.push(
         new Paragraph({
@@ -414,7 +412,6 @@ export const exportAsDocument = async (req, res) => {
               color: "4A5568",
             }),
           ],
-
           alignment: AlignmentType.CENTER,
           spacing: { after: 400 },
         })
@@ -426,19 +423,18 @@ export const exportAsDocument = async (req, res) => {
       new Paragraph({
         children: [
           new TextRun({
-            text: `by ${book.author}`,
+            text: `by ${book.author || ""}`,
             font: DOCX_STYLES.fonts.heading,
             size: DOCX_STYLES.sizes.author * 2,
             color: "2D3748",
           }),
         ],
-
         alignment: AlignmentType.CENTER,
         spacing: { after: 200 },
       })
     );
 
-    //Decorative line
+    // Decorative line
     titlePage.push(
       new Paragraph({
         text: "",
@@ -457,47 +453,64 @@ export const exportAsDocument = async (req, res) => {
 
     sections.push(...titlePage);
 
-    //Process Chapters
-    book.chapters.forEach((chapter, index) => {
-      try {
-        //Page Break Before each chapter except the first one
-        if (index > 0) {
+    // Process Chapters — use a robust for loop and proper page breaks
+    if (Array.isArray(book.chapters)) {
+      for (let index = 0; index < book.chapters.length; index++) {
+        const chapter = book.chapters[index];
+
+        try {
+          // Page Break Before each chapter except the very first content page
+          if (index > 0) {
+            sections.push(
+              new Paragraph({
+                text: "",
+                pageBreakBefore: true, // <-- fixed: use pageBreakBefore instead of undefined 'page'
+              })
+            );
+          }
+
+          // Chapter Title
           sections.push(
             new Paragraph({
-              text: "",
-              page,
+              children: [
+                new TextRun({
+                  text: chapter.title || `Chapter ${index + 1}`,
+                  bold: true,
+                  font: DOCX_STYLES.fonts.heading,
+                  size: DOCX_STYLES.sizes.chapterTitle * 2,
+                  color: "1A202C",
+                }),
+              ],
+              spacing: {
+                before: DOCX_STYLES.spacing.chapterBefore,
+                after: DOCX_STYLES.spacing.chapterAfter,
+              },
             })
           );
+
+          // Chapter Content
+          const contentParagraphs = processMarkdownToDocx(chapter.content || "");
+          if (Array.isArray(contentParagraphs) && contentParagraphs.length > 0) {
+            sections.push(...contentParagraphs);
+          } else {
+            // If the chapter has no content, still add a small spacer paragraph so chapters are visible
+            sections.push(
+              new Paragraph({
+                text: "",
+                spacing: { after: 200 },
+              })
+            );
+          }
+        } catch (ChapterError) {
+          console.error(`Error Processing Chapter ${index}:`, ChapterError);
+          // continue to next chapter — do not throw so entire doc fails
         }
-
-        //Chapter Title
-        sections.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: chapter.title,
-                bold: true,
-                font: DOCX_STYLES.fonts.heading,
-                size: DOCX_STYLES.sizes.chapterTitle * 2,
-                color: "1A202C",
-              }),
-            ],
-
-            spacing: {
-              before: DOCX_STYLES.spacing.chapterBefore,
-              after: DOCX_STYLES.spacing.chapterAfter,
-            },
-          })
-        );
-
-        //Chapter Content
-        const contentParagraphs = processMarkdownToDocx(chapter.content || "");
-        sections.push(...contentParagraphs);
-      } catch (ChapterError) {
-        console.error(`Error Processing Chapter ${index}:`, ChapterError);
       }
-    });
+    } else {
+      console.warn("No chapters array found on book when exporting DOCX");
+    }
 
+    // Create Document and pack
     const doc = new Document({
       sections: [
         {
@@ -516,10 +529,9 @@ export const exportAsDocument = async (req, res) => {
       ],
     });
 
-    // Generate the document buffer
     const buffer = await Packer.toBuffer(doc);
 
-    //send the document as a download
+    // send the document as a download
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -527,7 +539,7 @@ export const exportAsDocument = async (req, res) => {
 
     res.setHeader(
       "content-Disposition",
-      `attachment; filename=${book.title.replace(/[^a-zA-Z0-9]/g, "_")}.docx`
+      `attachment; filename=${(book.title || "book").replace(/[^a-zA-Z0-9]/g, "_")}.docx`
     );
 
     res.setHeader("Content-Length", buffer.length);
@@ -544,6 +556,7 @@ export const exportAsDocument = async (req, res) => {
     }
   }
 };
+
 
 //Typography configuration matching the DOCX export
 const TYPOGRAPHY = {
