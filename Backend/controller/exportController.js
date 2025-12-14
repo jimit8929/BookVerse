@@ -23,8 +23,6 @@ import fs from "fs";
 
 const md = new MarkdownIt();
 
-
-
 //Typography configuration matching the PDF export
 
 const DOCX_STYLES = {
@@ -489,8 +487,13 @@ export const exportAsDocument = async (req, res) => {
           );
 
           // Chapter Content
-          const contentParagraphs = processMarkdownToDocx(chapter.content || "");
-          if (Array.isArray(contentParagraphs) && contentParagraphs.length > 0) {
+          const contentParagraphs = processMarkdownToDocx(
+            chapter.content || ""
+          );
+          if (
+            Array.isArray(contentParagraphs) &&
+            contentParagraphs.length > 0
+          ) {
             sections.push(...contentParagraphs);
           } else {
             // If the chapter has no content, still add a small spacer paragraph so chapters are visible
@@ -539,7 +542,10 @@ export const exportAsDocument = async (req, res) => {
 
     res.setHeader(
       "content-Disposition",
-      `attachment; filename=${(book.title || "book").replace(/[^a-zA-Z0-9]/g, "_")}.docx`
+      `attachment; filename=${(book.title || "book").replace(
+        /[^a-zA-Z0-9]/g,
+        "_"
+      )}.docx`
     );
 
     res.setHeader("Content-Length", buffer.length);
@@ -556,7 +562,6 @@ export const exportAsDocument = async (req, res) => {
     }
   }
 };
-
 
 //Typography configuration matching the DOCX export
 const TYPOGRAPHY = {
@@ -594,6 +599,7 @@ const TYPOGRAPHY = {
   },
 };
 
+
 const renderInlineTokens = (doc, tokens, options = {}) => {
   if (!tokens || tokens.length === 0) return;
 
@@ -606,14 +612,14 @@ const renderInlineTokens = (doc, tokens, options = {}) => {
   let currentFont = TYPOGRAPHY.fonts.serif;
   let textBuffer = "";
 
-  const flushBuffer = () => {
-    if (textBuffer) {
-      doc.font(currentFont).text(textBuffer, {
-        ...baseOptions,
-        continued: true,
-      });
-      textBuffer = "";
-    }
+  // Flush buffer to PDF. `continued` controls whether the next write continues same line.
+  const flushBuffer = (continued = true) => {
+    if (!textBuffer) return;
+    doc.font(currentFont).text(textBuffer, {
+      ...baseOptions,
+      continued,
+    });
+    textBuffer = "";
   };
 
   for (let i = 0; i < tokens.length; i++) {
@@ -622,37 +628,35 @@ const renderInlineTokens = (doc, tokens, options = {}) => {
     if (token.type === "text") {
       textBuffer += token.content;
     } else if (token.type === "strong_open") {
-      flushBuffer();
+      // write what's before, continue the same line
+      flushBuffer(true);
       currentFont = TYPOGRAPHY.fonts.serifBold;
     } else if (token.type === "strong_close") {
-      flushBuffer();
+      flushBuffer(true);
       currentFont = TYPOGRAPHY.fonts.serif;
     } else if (token.type === "em_open") {
-      flushBuffer();
+      flushBuffer(true);
       currentFont = TYPOGRAPHY.fonts.serifItalic;
     } else if (token.type === "em_close") {
-      flushBuffer();
+      flushBuffer(true);
       currentFont = TYPOGRAPHY.fonts.serif;
     } else if (token.type === "code_inline") {
-      flushBuffer();
+      // flush current buffer then print code inline in Courier
+      flushBuffer(true);
       doc.font("Courier").text(token.content, {
         ...baseOptions,
         continued: true,
       });
-
-      doc.font(currentFont); // revert to current font
+      // revert font
+      doc.font(currentFont);
+    } else {
+      // For any other token, flush (end current inline)
+      flushBuffer(true);
     }
   }
 
-  // if (textBuffer) {
-  //   doc.font(currentFont).text(textBuffer, {
-  //     ...baseOptions,
-  //     continued: false,
-  //   });
-  // } else {
-  //   doc.text("", { continued: false });
-  // }
-  doc.text("", { continued: false });
+  // final flush - end the line properly (important)
+  flushBuffer(false);
 };
 
 const renderMarkdown = (doc, markdown) => {
@@ -695,9 +699,10 @@ const renderMarkdown = (doc, markdown) => {
           .fillColor(TYPOGRAPHY.colors.heading);
 
         if (i + 1 < tokens.length && tokens[i + 1].type === "inline") {
+          // ensure inline tokens flush correctly with final newline
           renderInlineTokens(doc, tokens[i + 1].children, {
             align: "left",
-            lineGap: 0,
+            lineGap: 2,
           });
           i++;
         }
@@ -716,6 +721,7 @@ const renderMarkdown = (doc, markdown) => {
           .fillColor(TYPOGRAPHY.colors.text);
 
         if (i + 1 < tokens.length && tokens[i + 1].type === "inline") {
+          // render inline tokens - they will end the line correctly
           renderInlineTokens(doc, tokens[i + 1].children, {
             align: "justify",
             lineGap: 2,
@@ -749,7 +755,7 @@ const renderMarkdown = (doc, markdown) => {
         inList = false;
         listType = null;
         orderedListCounter = 1;
-        doc.moveDown(TYPOGRAPHY.spacing.listSpacing / TYPOGRAPHY.sizes.body);
+        doc.moveDown(TYPOGRAPHY.spacing.listSpacing / TYPOOGRAPHY.sizes.body);
       } else if (token.type === "list_item_open") {
         let bulletText = "";
         if (listType === "bullet") {
@@ -764,6 +770,7 @@ const renderMarkdown = (doc, markdown) => {
           .fontSize(TYPOGRAPHY.sizes.body)
           .fillColor(TYPOGRAPHY.colors.text);
 
+        // write bullet and then continue on same line
         doc.text(bulletText, { continued: true, indent: 20 });
 
         for (let j = i + 1; j < tokens.length; j++) {
@@ -816,137 +823,6 @@ const renderMarkdown = (doc, markdown) => {
   }
 };
 
-// export const exportAsPDF = async (req, res) => {
-//   try {
-//     const book = await Book.findById(req.params.id);
-
-//     if (!book) {
-//       return res.status(404).json({ message: "Book not Found" });
-//     }
-
-//     if (book.userId.toString() !== req.user._id.toString()) {
-//       return res.status(401).json({ message: "Not Authorized" });
-//     }
-
-//     //Create a PDF Document
-//     const doc = new PDFDocument({
-//       margins: { top: 72, bottom: 72, left: 72, right: 72 },
-//       bufferPages: true,
-//       autoFirstPage: true,
-//     });
-
-//     //set headers before piping
-//     res.setHeader("Content-Type", "application/pdf");
-//     res.setHeader(
-//       "Content-Disposition",
-//       `attachment; filename=${book.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
-//     );
-
-//     //Pipe the PDF into response
-//     doc.pipe(res);
-
-//     //Cover page with image if available
-//     if (book.coverImage && !book.coverImage.includes("pravatar")) {
-//       // const imagePath = book.coverImage.substring(1);
-//       const imagePath = path.join(
-//         process.cwd(),
-//         book.coverImage.replace(/^\//, "")
-//       );
-
-//       try {
-//         if (fs.existsSync(imagePath)) {
-//           const pageWidth =
-//             doc.page.width - doc.page.margins.left - doc.page.margins.right;
-
-//           const pageHeight =
-//             doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
-
-//           doc.image(imagePath, doc.page.margins.left, doc.page.margins.top, {
-//             fit: [pageWidth * 0.8, pageHeight * 0.8],
-//             align: "center",
-//             valign: "center",
-//           });
-//           doc.addPage();
-//         }
-//       } catch (ImgError) {
-//         console.error(`Could not embed image: ${imagePath}`, ImgError);
-//       }
-//     }
-
-//     //Title Page
-//     doc
-//       .font(TYPOGRAPHY.fonts.sansBold)
-//       .fontSize(TYPOGRAPHY.sizes.title)
-//       .fillColor(TYPOGRAPHY.colors.heading)
-//       .text(book.title, { align: "center" });
-
-//     doc.moveDown(2);
-
-//     if (book.subtitle && book.subtitle.trim()) {
-//       doc
-//         .font(TYPOGRAPHY.fonts.sans)
-//         .fontSize(TYPOGRAPHY.sizes.h2)
-//         .fillColor(TYPOGRAPHY.colors.text)
-//         .text(book.subtitle, { align: "center" });
-
-//       doc.moveDown(1);
-//     }
-
-//     doc
-//       .font(TYPOGRAPHY.fonts.sans)
-//       .fontSize(TYPOGRAPHY.sizes.author)
-//       .fillColor(TYPOGRAPHY.colors.text)
-//       .text(`by ${book.author}`, { align: "center" });
-
-//     //Process Chapters
-//     if (book.chapters && book.chapters.length > 0) {
-//       book.chapters.forEach((chapter, index) => {
-//         try {
-//           doc.addPage();
-
-//           //Chapter Title
-//           doc
-//             .font(TYPOGRAPHY.fonts.sansBold)
-//             .fontSize(TYPOGRAPHY.sizes.chapterTitle)
-//             .fillColor(TYPOGRAPHY.colors.heading)
-//             .text(chapter.title || `Chapter ${index + 1}`, { align: "left" });
-
-//           doc.moveDown(
-//             TYPOGRAPHY.spacing.chapterSpacing / TYPOGRAPHY.sizes.body
-//           );
-
-//           //Chapter Content
-//           if (chapter.content && chapter.content.trim()) {
-//             renderMarkdown(doc, chapter.content);
-//           }
-//         } catch (ChapterError) {
-//           console.error(`Error Processing Chapter ${index}:`, ChapterError);
-//         }
-//       });
-//     }
-
-//     //Finalize the PDF and end the stream
-//     doc.end();
-
-//     console.log("CWD = ", process.cwd());
-//     console.log("coverImage = ", book.coverImage);
-//     console.log("imagePath = ", imagePath);
-//     console.log("exists = ", fs.existsSync(imagePath));
-//   } catch (error) {
-//     console.error("Error exporting PDF:", error);
-
-//     if (!res.headersSent) {
-//       res.status(500).json({
-//         message: " Server Error During PDF Export",
-//         error: error.message,
-//       });
-//     }
-//   }
-// };
-
-/* -------------------------
-   Export as PDF (robust)
-   ------------------------- */
 export const exportAsPDF = async (req, res) => {
   let doc = null;
   let imagePath = null;
@@ -1003,13 +879,20 @@ export const exportAsPDF = async (req, res) => {
     // Set headers BEFORE piping
     const safeFilename = (book.title || "book").replace(/[^a-zA-Z0-9]/g, "_");
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename=${safeFilename}.pdf`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=${safeFilename}.pdf`
+    );
 
     // Pipe doc into response
     doc.pipe(res);
 
     // --- COVER IMAGE (resolved safely) ---
-    if (book.coverImage && typeof book.coverImage === "string" && !book.coverImage.includes("pravatar")) {
+    if (
+      book.coverImage &&
+      typeof book.coverImage === "string" &&
+      !book.coverImage.includes("pravatar")
+    ) {
       // Expect stored as "/uploads/filename" or "uploads/filename"
       const relative = book.coverImage.replace(/^\//, ""); // remove leading slash if present
       imagePath = path.join(process.cwd(), relative); // e.g., Backend/uploads/filename
@@ -1022,8 +905,10 @@ export const exportAsPDF = async (req, res) => {
 
       if (fs.existsSync(imagePath)) {
         try {
-          const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-          const pageHeight = doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
+          const pageWidth =
+            doc.page.width - doc.page.margins.left - doc.page.margins.right;
+          const pageHeight =
+            doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
 
           doc.image(imagePath, doc.page.margins.left, doc.page.margins.top, {
             fit: [pageWidth * 0.8, pageHeight * 0.8],
@@ -1046,15 +931,27 @@ export const exportAsPDF = async (req, res) => {
     }
 
     // --- TITLE PAGE ---
-    doc.font(TYPOGRAPHY.fonts.sansBold).fontSize(TYPOGRAPHY.sizes.title).fillColor(TYPOGRAPHY.colors.heading).text(book.title || "", { align: "center" });
+    doc
+      .font(TYPOGRAPHY.fonts.sansBold)
+      .fontSize(TYPOGRAPHY.sizes.title)
+      .fillColor(TYPOGRAPHY.colors.heading)
+      .text(book.title || "", { align: "center" });
     doc.moveDown(2);
 
     if (book.subtitle && book.subtitle.trim()) {
-      doc.font(TYPOGRAPHY.fonts.sans).fontSize(TYPOGRAPHY.sizes.h2).fillColor(TYPOGRAPHY.colors.text).text(book.subtitle, { align: "center" });
+      doc
+        .font(TYPOGRAPHY.fonts.sans)
+        .fontSize(TYPOGRAPHY.sizes.h2)
+        .fillColor(TYPOGRAPHY.colors.text)
+        .text(book.subtitle, { align: "center" });
       doc.moveDown(1);
     }
 
-    doc.font(TYPOGRAPHY.fonts.sans).fontSize(TYPOGRAPHY.sizes.author).fillColor(TYPOGRAPHY.colors.text).text(`by ${book.author || ""}`, { align: "center" });
+    doc
+      .font(TYPOGRAPHY.fonts.sans)
+      .fontSize(TYPOGRAPHY.sizes.author)
+      .fillColor(TYPOGRAPHY.colors.text)
+      .text(`by ${book.author || ""}`, { align: "center" });
 
     // --- CHAPTERS ---
     if (Array.isArray(book.chapters) && book.chapters.length > 0) {
@@ -1063,7 +960,11 @@ export const exportAsPDF = async (req, res) => {
         // start each chapter on a new page
         doc.addPage();
 
-        doc.font(TYPOGRAPHY.fonts.sansBold).fontSize(TYPOGRAPHY.sizes.chapterTitle).fillColor(TYPOGRAPHY.colors.heading).text(chapter.title || `Chapter ${index + 1}`, { align: "left" });
+        doc
+          .font(TYPOGRAPHY.fonts.sansBold)
+          .fontSize(TYPOGRAPHY.sizes.chapterTitle)
+          .fillColor(TYPOGRAPHY.colors.heading)
+          .text(chapter.title || `Chapter ${index + 1}`, { align: "left" });
         doc.moveDown(TYPOGRAPHY.spacing.chapterSpacing / TYPOGRAPHY.sizes.body);
 
         if (chapter.content && chapter.content.trim()) {
@@ -1079,7 +980,12 @@ export const exportAsPDF = async (req, res) => {
     console.error("Error exporting PDF:", error);
     // If headers haven't been sent yet, respond with JSON error
     if (!res.headersSent) {
-      return res.status(500).json({ message: "Server Error During PDF Export", error: error.message });
+      return res
+        .status(500)
+        .json({
+          message: "Server Error During PDF Export",
+          error: error.message,
+        });
     } else {
       // headers already sent: ensure doc/res are cleaned up to prevent 'write after end'
       if (doc && !doc._destroyed) {
