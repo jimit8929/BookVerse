@@ -276,8 +276,20 @@ const EditorPage = () => {
 
   if (isLoading || !book) {
     return (
-      <div className="flex h-screen items-center justify-center text-6xl">
-        <p>Loading Editor...</p>
+      <div className="flex flex-col items-center justify-center h-screen text-center px-6">
+        <div className="relative">
+          <div className="h-24 w-24 rounded-full bg-linear-to-br from-violet-300 to-purple-400 blur-2xl opacity-40"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-14 w-14 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin"></div>
+          </div>
+        </div>
+
+        <h2 className="mt-8 text-4xl font-semibold text-gray-900">
+          Loading Editor...
+        </h2>
+        <p className="text-xl text-gray-500 mt-2">
+          Setting up your writing workspace
+        </p>
       </div>
     );
   }
