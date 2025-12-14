@@ -1,6 +1,6 @@
 import React from "react";
 import { ChevronDown } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const ProfileDropdown = ({
   isOpen,
@@ -10,7 +10,7 @@ const ProfileDropdown = ({
   email,
   onLogout,
 }) => {
-  const navigate = useNavigate();
+
 
   return (
     <div className="relative">
@@ -27,7 +27,7 @@ const ProfileDropdown = ({
         ) : (
           <div className="h-8 w-8 bg-linear-to-br from-violet-400 to-violet-500 rounded-xl flex items-center justify-center">
             <span className="text-white font-semibold text-lg">
-              {companyName.charAt(0).toUpperCase()}
+              {companyName?.charAt(0)?.toUpperCase() || ""}
             </span>
           </div>
         )}
@@ -47,21 +47,25 @@ const ProfileDropdown = ({
             <p className="text-lg text-gray-500">{email}</p>
           </div>
 
+          {/* Use Link with `to` for profile navigation */}
           <Link
-            onClick={() => navigate("/profile")}
+            to="/profile"
             className="block px-4 py-2 text-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
           >
             View Profile
           </Link>
 
           <div className="border-t border-gray-100 mt-2 pt-2">
-            <Link
-              to="#"
-              onClick={onLogout}
-              className="block px-4 py-2 text-lg text-red-600 hover:bg-red-50 transition-colors"
+            {/* Use button for sign out */}
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof onLogout === "function") onLogout();
+              }}
+              className="w-full text-left px-4 py-2 text-lg text-red-600 hover:bg-red-50 transition-colors"
             >
               Sign Out
-            </Link>
+            </button>
           </div>
         </div>
       )}
