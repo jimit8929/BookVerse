@@ -19,6 +19,7 @@ const SimpleMDEditor = ({ value, onChange, options }) => {
       {/* Editor */}
       <div className="p-3 bg-white">
         <MDEditor
+          className="my-mde"
           value={value}
           onChange={onChange}
           height={500}
