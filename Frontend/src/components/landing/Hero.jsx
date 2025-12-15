@@ -3,6 +3,7 @@ import { ArrowRight, Sparkles, BookOpen, Zap } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import HERO_IMG from "../../assets/HERO_IMG.jpg";
+import HERO_IMG_2 from "../../assets/HERO_IMG_2.jpg";
 
 const Hero = () => {
   const { isAuthenticated } = useAuth();
@@ -73,13 +74,21 @@ const Hero = () => {
           </div>
 
           <div className="relative lg:pl-8">
-            <div className="relative">
-              <div className="absolute -inset-4 bg-linear-to-r from-violet-600 to-purple-600 rounded-3xl opacity-20 blur-2xl"></div>
+            <div className="relative w-[900px]">
+              <div className="absolute -inset-4 bg-linear-to-r from-violet-600 to-purple-600 rounded-3xl opacity-20 blur-2xl "></div>
               <div className="relative bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100">
                 <img
                   src={HERO_IMG}
                   alt="AI Ebook Creator Dashboard"
-                  className="w-full max-h-[700px]"
+                  loading="eager"
+                  className="w-full min-h-[600px] hidden lg:block"
+                />
+
+                <img
+                  src={HERO_IMG_2}
+                  alt="AI Ebook Creator Dashboard Compact"
+                  loading="lazy"
+                  className="w-full min-h-[420px] block lg:hidden"
                 />
 
                 <div className="absolute top-6 right-6 bg-white rounded-2xl shadow-xl p-4 backdrop-blur-sm border border-gray-100 animate-in fade-in slide-in-from-right duration-700">
@@ -114,8 +123,33 @@ const Hero = () => {
               </div>
             </div>
 
-            <div className="absolute -top-8 -left-2 w-20 h-20 bg-violet-400/30 rounded-2xl rotate-12"></div>
-            <div className="absolute -bottom-14 -right-12 w-32 h-32 bg-purple-400/30 rounded-full"></div>
+            {/* Top-left decorative block */}
+            <div
+              className="
+    absolute 
+    -top-4 -left-1 
+    w-10 h-10 
+    bg-violet-400/30 rounded-2xl rotate-12
+    
+    sm:-top-6 sm:-left-2 sm:w-14 sm:h-14
+    md:-top-6 md:-left-3 md:w-16 md:h-16
+    lg:-top-8 lg:-left-2 lg:w-20 lg:h-20
+  "
+            ></div>
+
+            {/* Bottom-right decorative circle */}
+            <div
+              className="
+    absolute 
+    -bottom-8 -right-8
+    w-20 h-20 
+    bg-purple-400/30 rounded-full
+
+    sm:-bottom-10 sm:-right-10 sm:w-24 sm:h-24
+    md:-bottom-12 md:-right-12 md:w-28 md:h-28
+    lg:-bottom-14 lg:-right-54 lg:w-32 lg:h-32
+  "
+            ></div>
           </div>
         </div>
       </div>
