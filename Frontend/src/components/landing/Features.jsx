@@ -6,63 +6,63 @@ const Features = () => {
   return (
     <div
       id="features"
-      className="relative py-24 lg:py-32 bg-white overflow-hidden"
+      className="relative py-16 sm:py-24 lg:py-32 bg-white overflow-hidden"
     >
+      {/* Subtle Background Pattern */}
+      <div className="absolute inset-0 bg-linear-to-b from-violet-50/50 via-transparent to-purple-50/50"></div>
 
-
-    {/* Subtle Background Pattern */}
-    <div className="absolute inset-0 bg-linear-to-b from-violet-50/50 via-transparent to-purple-50/50"></div>
-
-      
-      <div className="max-w-[1660px] mx-auto px-6 lg:px-8 relative">
-        <div className="text-center mb-20 space-y-4">
-          <div className="inline-flex items-center space-x-2 bg-violet-100 px-4 py-2 rounded-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        {/* Heading */}
+        <div className="text-center mb-14 sm:mb-20 space-y-4">
+          <div className="inline-flex items-center space-x-2 bg-violet-100 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
             <span className="w-2 h-2 bg-violet-600 rounded-full animate-pulse"></span>
-            <span className="text-lg font-semibold text-violet-900">
+            <span className="text-base sm:text-lg font-semibold text-violet-900">
               Our Features
             </span>
           </div>
 
-          <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 tracking-tight">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 tracking-tight">
             Everything You Need to
             <span className="block mt-2 bg-linear-to-r from-violet-600 via-purple-600 to-violet-600 bg-clip-text text-transparent">
               Create Your Ebook
             </span>
           </h2>
 
-          <p className="text-2xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
             Our Platform is packed with powerful features to help you write,
             design, and publish your ebook with ease.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {FEATURES.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <div
-                className="group relative bg-white rounded-2xl p-8 border border-gray-100 hover:border-violet-500 hover:shadow-xl hover:shadow-violet-500/10 transition-all duration-300 hover:-translate-y-1"
                 key={index}
+                className="group relative bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 hover:border-violet-500 hover:shadow-xl hover:shadow-violet-500/10 transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="absolute inset-0 bg-linear-to-br from-violet-50/0 to-purple-50/0 group-hover:from-violet-50/50 group-hover:to-purple-50/30 rounded-2xl transition-all duration-300"></div>
+
                 <div className="relative space-y-4">
                   <div
-                    className={`w-14 h-14 bg-linear-to-br ${feature.gradient} rounded-xl flex items-center justify-center shadow-lg shadow-${feature.gradient}/20 group-hover:shadow-${feature.gradient}/40 transition-all duration-300 group-hover:scale-105`}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 bg-linear-to-br ${feature.gradient} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300`}
                   >
-                    <Icon className="w-7 h-7 text-white" />
+                    <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   </div>
 
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-violet-900 transition-colors">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 group-hover:text-violet-900 transition-colors">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed text-lg">
+                    <p className="text-gray-600 leading-relaxed text-base sm:text-lg">
                       {feature.description}
                     </p>
                   </div>
 
-                  <div className="pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-violet-600 text-lg font-medium inline-flex items-center">
+                  <div className="pt-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="text-violet-600 text-base sm:text-lg font-medium inline-flex items-center">
                       Learn More
                       <svg
                         className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
@@ -85,13 +85,14 @@ const Features = () => {
           })}
         </div>
 
-        <div className="text-center mt-16">
-          <p className="text-gray-600 mb-6">Ready to get Started?</p>
+        {/* CTA */}
+        <div className="text-center mt-14 sm:mt-16">
+          <p className="text-gray-600 mb-5 sm:mb-6">Ready to get Started?</p>
           <Link
             to="/signup"
-            className="inline-flex items-center space-x-2 bg-linear-to-r from-violet-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-105 transition-all duration-300"
+            className="inline-flex items-center space-x-2 bg-linear-to-r from-violet-600 to-purple-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-105 transition-all duration-300"
           >
-            Start Creating Today
+            <span>Start Creating Today</span>
             <svg
               className="w-5 h-5"
               fill="none"
