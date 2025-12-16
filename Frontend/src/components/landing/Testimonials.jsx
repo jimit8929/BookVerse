@@ -5,7 +5,7 @@ import { TESTIMONIALS } from "../../utils/data.js";
 const Testimonials = () => {
   return (
     <div
-      id="Testimonials"
+      id="testimonials"
       className="relative py-24 lg:py-32 bg-linear-to-br from-violet-50 via-purple-50 to-white overflow-hidden"
     >
       <div className="absolute top-20 right-10 w-64 h-64 bg-violet-300/10 rounded-full blur-3xl"></div>

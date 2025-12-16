@@ -44,3 +44,7 @@
   color:#007A99 !important;
   background-color: #d0f4ff !important;
 }
+
+html {
+  scroll-behavior: smooth;
+}

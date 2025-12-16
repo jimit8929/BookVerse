@@ -11,8 +11,8 @@ const Navbar = () => {
   const [profileDropDownOpen, setProfileDropOpen] = useState(false);
 
   const navLinks = [
-    { name: "Features", href: "#features" },
-    { name: "Testimonials", href: "#testimonials" },
+    { name: "Features", href: "features" },
+    { name: "Testimonials", href: "testimonials" },
   ];
 
   //close dropdowns when clicking outside
@@ -44,13 +44,13 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1">
             {navLinks.map((link) => (
-              <Link
-                to={link.href}
+              <a
                 key={link.name}
+                href={`#${link.href}`}
                 className="px-4 py-2 text-xl font-medium text-gray-600 hover:text-violet-600 rounded-lg hover:bg-violet-50/50 transition-all duration-300 hover:font-semibold"
               >
                 {link.name}
-              </Link>
+              </a>
             ))}
           </nav>
 
@@ -67,8 +67,10 @@ const Navbar = () => {
                 companyName={user?.name || ""}
                 email={user?.email || ""}
                 userRole={user?.role || ""}
-                onLogout={() => { logout(); setProfileDropOpen(false); }}
-
+                onLogout={() => {
+                  logout();
+                  setProfileDropOpen(false);
+                }}
               />
             ) : (
               <>
@@ -103,13 +105,14 @@ const Navbar = () => {
         <div className="lg:hidden bg-white border-t border-gray-100 animate-in slide-in-from-top duration-300">
           <nav className="px-4 py-4 space-y-1">
             {navLinks.map((link) => (
-              <Link
-                to={link.href}
+              <a
                 key={link.name}
+                href={`#${link.href}`}
+                onClick={() => setIsOpen(false)}
                 className="block px-4 py-2.5 rounded-lg text-xl font-medium text-gray-700 hover:text-violet-600 hover:bg-violet-50 transition-all duration-300"
               >
                 {link.name}
-              </Link>
+              </a>
             ))}
           </nav>
 

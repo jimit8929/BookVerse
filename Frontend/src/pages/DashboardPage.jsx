@@ -35,13 +35,11 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
           className="fixed inset-0 bg-black/50 bg-opacity-25 transition-opacity"
           onClick={onClose}
         ></div>
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
-          <h3 className="text-2xl font-semibold text-slate-900 mb-4">
-            {title}
-          </h3>
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 sm:mx-0 p-6 relative">
+          <h3 className="text-2xl font-semibold text-slate-900 mb-4">{title}</h3>
           <p className="text-slate-600 mb-6">{message}</p>
 
-          <div className="flex justify-end space-x-3">
+          <div className="flex flex-col sm:flex-row justify-end sm:space-x-3 gap-3">
             <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>
@@ -111,38 +109,38 @@ const DashboardPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900">All eBooks</h1>
-            <p className="text-xl text-slate-600 mt-1">
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">All eBooks</h1>
+            <p className="text-base sm:text-xl text-slate-600 mt-1 max-w-2xl">
               Create, edit, and manage all your AI-generated eBooks.
             </p>
           </div>
 
-          <Button
-            className="whitespace-nowrap"
-            onClick={handleCreateBookClick}
-            icon={Plus}
-          >
-            Create New eBook
-          </Button>
+          <div className="flex items-center">
+            <Button
+              className="whitespace-nowrap px-3 py-2 sm:px-5 sm:py-2.5"
+              onClick={handleCreateBookClick}
+              icon={Plus}
+            >
+              <span className="text-sm sm:text-base">Create New eBook</span>
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}
           </div>
         ) : books.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 rounded-xl mt-16">
+          <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 rounded-xl mt-16 px-4 sm:px-8">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
               <Book className="w-12 h-12 text-slate-400" />
             </div>
-            <h3 className="text-2xl font-medium text-slate-900 mb-2">
-              No eBooks Found
-            </h3>
+            <h3 className="text-2xl font-medium text-slate-900 mb-2">No eBooks Found</h3>
             <p className="text-slate-500 mb-6 max-w-md">
               You haven't created any eBooks yet. Get started by creating your
               first one.
@@ -153,7 +151,7 @@ const DashboardPage = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {books.map((book) => (
               <BookCard
                 key={book._id}
